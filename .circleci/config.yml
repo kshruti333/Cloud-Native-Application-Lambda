@@ -1,0 +1,50 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+
+      - run:
+          name: Install packages
+          command: sudo apt-get update && sudo apt-get install wget zip unzip python2.7 python-pip -y
+
+      - run:
+          name: Install awscli
+          command: sudo pip install awscli
+
+      - run:
+          name: Check gradle version
+          command: |
+            cd webapps/notelambda
+            pwd
+            ls -al
+            gradle clean build
+            pwd
+            cd ..
+            cd ..
+            pwd
+
+      - run:
+          name: Zip Artifact and Upload Artifact to S3
+          command: |
+            echo "Hello the current build number is ${CIRCLE_BUILD_NUM}"
+            pwd
+            ls -al
+            mkdir -p lambda_artifact
+            mv webapps/notelambda/build/distributions/notelambda.zip lambda_artifact/
+            cd lambda_artifact
+            ls -al
+            pwd
+            cd ..
+            pwd
+            ls -al
+            aws s3 sync lambda_artifact s3://${bucket}
+            echo 'The lambda zip is pushed to ${bucket}'
+
+      - run:
+          name: Make Lambda function API call
+          command: |
+            echo "Hello Lambda"
+            aws lambda update-function-code --function-name "NoteLambda" --s3-bucket ${bucket} --s3-key=notelambda.zip --region us-east-1

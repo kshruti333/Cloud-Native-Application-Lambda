@@ -1,0 +1,24 @@
+group 'notelambda'
+
+apply plugin: 'java'
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
+    compile 'com.amazonaws:aws-lambda-java-events:1.1.0'
+    compile 'com.amazonaws:aws-java-sdk-ses:1.11.313'
+}
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtime
+    }
+}
+
+build.dependsOn buildZip
